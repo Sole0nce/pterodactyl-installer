@@ -41,9 +41,29 @@ if ! [ -x "$(command -v curl)" ]; then
   exit 1
 fi
 
+# Parse --china argument for pterodactyl-china support
+export PTERODACTYL_CHINA=false
+for arg in "$@"; do
+  case "$arg" in
+    --china)
+      export PTERODACTYL_CHINA=true
+      ;;
+  esac
+done
+
+# Detect script directory for local file sourcing
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Always remove lib.sh, before downloading it
 [ -f /tmp/lib.sh ] && rm -rf /tmp/lib.sh
-curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL"/master/lib/lib.sh
+
+if [ "$PTERODACTYL_CHINA" == true ]; then
+  # In --china mode, use local files directly (for pterodactyl-china support)
+  cp "$SCRIPT_DIR/lib/lib.sh" /tmp/lib.sh
+else
+  # Normal mode: download from remote GitHub repository
+  curl -sSL -o /tmp/lib.sh "$GITHUB_BASE_URL"/master/lib/lib.sh
+fi
 # shellcheck source=lib/lib.sh
 source /tmp/lib.sh
 
@@ -51,8 +71,14 @@ execute() {
   echo -e "\n\n* pterodactyl-installer $(date) \n\n" >>$LOG_PATH
 
   [[ "$1" == *"canary"* ]] && export GITHUB_SOURCE="master" && export SCRIPT_RELEASE="canary"
-  update_lib_source
-  run_ui "${1//_canary/}" |& tee -a $LOG_PATH
+
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    # In --china mode, run local UI script directly (preserves environment variables)
+    bash "$SCRIPT_DIR/ui/${1//_canary/}.sh" |& tee -a $LOG_PATH
+  else
+    update_lib_source
+    run_ui "${1//_canary/}" |& tee -a $LOG_PATH
+  fi
 
   if [[ -n $2 ]]; then
     echo -e -n "* Installation of $1 completed. Do you want to proceed to $2 installation? (y/N): "

@@ -49,8 +49,14 @@ export ARCH=""
 export SUPPORTED=false
 
 # download URLs
-export PANEL_DL_URL="https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz"
-export WINGS_DL_BASE_URL="https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_"
+# If --china flag is set, use pterodactyl-china repositories for localized version
+if [ "$PTERODACTYL_CHINA" == true ]; then
+  export PANEL_DL_URL="https://github.com/pterodactyl-china/panel/releases/latest/download/panel.tar.gz"
+  export WINGS_DL_BASE_URL="https://github.com/pterodactyl-china/wings/releases/latest/download/wings_linux_"
+else
+  export PANEL_DL_URL="https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz"
+  export WINGS_DL_BASE_URL="https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_"
+fi
 export MARIADB_URL="https://downloads.mariadb.com/MariaDB/mariadb_repo_setup"
 export GITHUB_BASE_URL=${GITHUB_BASE_URL:-"https://raw.githubusercontent.com/pterodactyl-installer/pterodactyl-installer"}
 export GITHUB_URL="$GITHUB_BASE_URL/$GITHUB_SOURCE"
@@ -148,8 +154,13 @@ get_latest_release() {
 
 get_latest_versions() {
   output "Retrieving release information..."
-  PTERODACTYL_PANEL_VERSION=$(get_latest_release "pterodactyl/panel")
-  PTERODACTYL_WINGS_VERSION=$(get_latest_release "pterodactyl/wings")
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    PTERODACTYL_PANEL_VERSION=$(get_latest_release "pterodactyl-china/panel")
+    PTERODACTYL_WINGS_VERSION=$(get_latest_release "pterodactyl-china/wings")
+  else
+    PTERODACTYL_PANEL_VERSION=$(get_latest_release "pterodactyl/panel")
+    PTERODACTYL_WINGS_VERSION=$(get_latest_release "pterodactyl/wings")
+  fi
 }
 
 update_lib_source() {
@@ -161,11 +172,21 @@ update_lib_source() {
 }
 
 run_installer() {
-  bash <(curl -sSL "$GITHUB_URL/installers/$1.sh")
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    SCRIPT_DIR_INSTALLER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    bash "$SCRIPT_DIR_INSTALLER/installers/$1.sh"
+  else
+    bash <(curl -sSL "$GITHUB_URL/installers/$1.sh")
+  fi
 }
 
 run_ui() {
-  bash <(curl -sSL "$GITHUB_URL/ui/$1.sh")
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    SCRIPT_DIR_UI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    bash "$SCRIPT_DIR_UI/ui/$1.sh"
+  else
+    bash <(curl -sSL "$GITHUB_URL/ui/$1.sh")
+  fi
 }
 
 array_contains_element() {
