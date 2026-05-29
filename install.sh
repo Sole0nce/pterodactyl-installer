@@ -34,13 +34,6 @@ export GITHUB_BASE_URL="https://raw.githubusercontent.com/pterodactyl-installer/
 
 LOG_PATH="/var/log/pterodactyl-installer.log"
 
-# check for curl
-if ! [ -x "$(command -v curl)" ]; then
-  echo "* curl 是此脚本运行所必需的。"
-  echo "* 请使用 apt(Debian 及其衍生版)或 yum/dnf(CentOS)安装 curl"
-  exit 1
-fi
-
 # Parse --china argument for pterodactyl-china support
 export PTERODACTYL_CHINA=false
 for arg in "$@"; do
@@ -50,6 +43,18 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+# check for curl
+if ! [ -x "$(command -v curl)" ]; then
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    echo "* curl 是此脚本运行所必需的。"
+    echo "* 请使用 apt(Debian 及其衍生版)或 yum/dnf(CentOS)安装 curl"
+  else
+    echo "* curl is required in order for this script to work."
+    echo "* install using apt (Debian and derivatives) or yum/dnf (CentOS)"
+  fi
+  exit 1
+fi
 
 # Detect script directory for local file sourcing
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -82,12 +87,20 @@ execute() {
   fi
 
   if [[ -n $2 ]]; then
-    echo -e -n "* $1 安装完成。是否继续安装 $2？(y/N): "
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      echo -e -n "* $1 安装完成。是否继续安装 $2？(y/N): "
+    else
+      echo -e -n "* $1 installation completed. Do you want to proceed to $2 installation? (y/N): "
+    fi
     read -r CONFIRM
     if [[ "$CONFIRM" =~ [Yy] ]]; then
       execute "$2"
     else
-      error "$2 安装已取消。"
+      if [ "$PTERODACTYL_CHINA" == true ]; then
+        error "$2 安装已取消。"
+      else
+        error "Installation of $2 aborted."
+      fi
       exit 1
     fi
   fi
@@ -129,19 +142,35 @@ while [ "$done" == false ]; do
     "uninstall_canary"
   )
 
-  output "请选择要执行的操作："
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "请选择要执行的操作："
+  else
+    output "What would you like to do?"
+  fi
 
   for i in "${!options[@]}"; do
     output "[$i] ${options[$i]}"
   done
 
-  echo -n "* 输入 0-$((${#actions[@]} - 1)): "
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    echo -n "* 输入 0-$((${#actions[@]} - 1)): "
+  else
+    echo -n "* Input 0-$((${#actions[@]} - 1)): "
+  fi
   read -r action
 
-  [ -z "$action" ] && error "请输入选项" && continue
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    [ -z "$action" ] && error "请输入选项" && continue
+  else
+    [ -z "$action" ] && error "Input is required" && continue
+  fi
 
   valid_input=("$(for ((i = 0; i <= ${#actions[@]} - 1; i += 1)); do echo "${i}"; done)")
-  [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "无效选项"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "无效选项"
+  else
+    [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "Invalid option"
+  fi
   [[ " ${valid_input[*]} " =~ ${action} ]] && done=true && IFS=";" read -r i1 i2 <<<"${actions[$action]}" && execute "$i1" "$i2"
 done
 
