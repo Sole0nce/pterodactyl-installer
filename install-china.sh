@@ -69,7 +69,7 @@ print_brake() {
 
 # 检查是否为 root 用户
 if [[ $EUID -ne 0 ]]; then
-  error "请使用 root 权限运行此脚本（使用 sudo）"
+  error "请使用 root 权限运行此脚本(使用 sudo)"
   exit 1
 fi
 
@@ -86,9 +86,9 @@ print_brake 60
 output "${COLOR_CYAN}翼龙面板汉化版 - 一键安装脚本${COLOR_NC}"
 output ""
 output "本脚本将安装以下组件："
-output "  · 翼龙面板（汉化版）"
+output "  · 翼龙面板(汉化版)"
 output "    https://github.com/pterodactyl-china/panel"
-output "  · 翼龙 Wings 守护进程（汉化版）"
+output "  · 翼龙 Wings 守护进程(汉化版)"
 output "    https://github.com/pterodactyl-china/wings"
 output ""
 output "Copyright (C) 2018 - 2026, Vilhelm Prytz"
@@ -99,7 +99,7 @@ output "如需帮助请访问：https://github.com/pterodactyl-china/documentati
 print_brake 60
 echo ""
 
-# 第1步：确定安装目录（优先使用空间较大的分区）
+# 第1步：确定安装目录(优先使用空间较大的分区)
 INSTALL_DIR=""
 for dir in "/mnt/data/pterodactyl-installer" "/opt/pterodactyl-installer" "$HOME/pterodactyl-installer"; do
   parent_dir=$(dirname "$dir")
@@ -140,7 +140,7 @@ output "${COLOR_CYAN}  请根据提示完成交互式安装              ${COLOR
 output "${COLOR_CYAN}========================================${COLOR_NC}"
 echo ""
 output "安装选项说明："
-output "  [0] 仅安装面板（推荐先安装面板）"
+output "  [0] 仅安装面板(推荐先安装面板)"
 output "  [1] 仅安装 Wings 守护进程"
 output "  [2] 同时安装面板和 Wings"
 echo ""

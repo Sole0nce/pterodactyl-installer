@@ -74,7 +74,11 @@ done
 
 if (( ${#missing[@]} > 0 )); then
   for m in "${missing[@]}"; do
-    error "${m} is required"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      error "${m} 是必需的参数"
+    else
+      error "${m} is required"
+    fi
   done
   exit 1
 fi
@@ -83,13 +87,25 @@ fi
 # --------- Main installation functions -------- #
 
 install_composer() {
-  output "Installing composer.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装 composer..."
+  else
+    output "Installing composer.."
+  fi
   curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-  success "Composer installed!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "Composer 安装完成！"
+  else
+    success "Composer installed!"
+  fi
 }
 
 ptdl_dl() {
-  output "Downloading pterodactyl panel files .. "
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在下载翼龙面板文件..."
+  else
+    output "Downloading pterodactyl panel files .. "
+  fi
   mkdir -p /var/www/pterodactyl
   cd /var/www/pterodactyl || exit
 
@@ -99,19 +115,35 @@ ptdl_dl() {
 
   cp .env.example .env
 
-  success "Downloaded pterodactyl panel files!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "面板文件下载完成！"
+  else
+    success "Downloaded pterodactyl panel files!"
+  fi
 }
 
 install_composer_deps() {
-  output "Installing composer dependencies.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装 composer 依赖..."
+  else
+    output "Installing composer dependencies.."
+  fi
   [ "$OS" == "rocky" ] || [ "$OS" == "almalinux" ] && export PATH=/usr/local/bin:$PATH
   COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
-  success "Installed composer dependencies!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "Composer 依赖安装完成！"
+  else
+    success "Installed composer dependencies!"
+  fi
 }
 
 # Configure environment
 configure() {
-  output "Configuring environment.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在配置环境..."
+  else
+    output "Configuring environment.."
+  fi
 
   local app_url="http://$FQDN"
   [ "$ASSUME_SSL" == true ] && app_url="https://$FQDN"
@@ -153,7 +185,11 @@ configure() {
     --password="$user_password" \
     --admin=1
 
-  success "Configured environment!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "环境配置完成！"
+  else
+    success "Configured environment!"
+  fi
 }
 
 # set the correct folder permissions depending on OS and webserver
@@ -170,18 +206,30 @@ set_folder_permissions() {
 }
 
 insert_cronjob() {
-  output "Installing cronjob.. "
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装计划任务..."
+  else
+    output "Installing cronjob.. "
+  fi
 
   crontab -l | {
     cat
     output "* * * * php /var/www/pterodactyl/artisan schedule:run >> /dev/null 2>&1"
   } | crontab -
 
-  success "Cronjob installed!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "计划任务安装完成！"
+  else
+    success "Cronjob installed!"
+  fi
 }
 
 install_pteroq() {
-  output "Installing pteroq service.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装 pteroq 服务..."
+  else
+    output "Installing pteroq service.."
+  fi
 
   curl -o /etc/systemd/system/pteroq.service "$GITHUB_URL"/configs/pteroq.service
 
@@ -197,7 +245,11 @@ install_pteroq() {
   systemctl enable pteroq.service
   systemctl start pteroq
 
-  success "Installed pteroq!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "pteroq 服务安装完成！"
+  else
+    success "Installed pteroq!"
+  fi
 }
 
 # -------- OS specific install functions ------- #
@@ -262,7 +314,11 @@ alma_rocky_dep() {
 }
 
 dep_install() {
-  output "Installing dependencies for $OS $OS_VER..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在为 $OS $OS_VER 安装依赖..."
+  else
+    output "Installing dependencies for $OS $OS_VER..."
+  fi
 
   # Update repos before installing
   update_repos
@@ -310,31 +366,52 @@ dep_install() {
 
   enable_services
 
-  success "Dependencies installed!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "依赖安装完成！"
+  else
+    success "Dependencies installed!"
+  fi
 }
 
 # --------------- Other functions -------------- #
 
 firewall_ports() {
-  output "Opening ports: 22 (SSH), 80 (HTTP) and 443 (HTTPS)"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在开放端口: 22 (SSH)、80 (HTTP) 和 443 (HTTPS)"
+  else
+    output "Opening ports: 22 (SSH), 80 (HTTP) and 443 (HTTPS)"
+  fi
 
   firewall_allow_ports "22 80 443"
 
-  success "Firewall ports opened!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "防火墙端口已开放！"
+  else
+    success "Firewall ports opened!"
+  fi
 }
 
 letsencrypt() {
   FAILED=false
 
-  output "Configuring Let's Encrypt..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在配置 Let's Encrypt..."
+  else
+    output "Configuring Let's Encrypt..."
+  fi
 
   # Obtain certificate
   certbot --nginx --redirect --no-eff-email --email "$email" -d "$FQDN" || FAILED=true
 
   # Check if it succeded
   if [ ! -d "/etc/letsencrypt/live/$FQDN/" ] || [ "$FAILED" == true ]; then
-    warning "The process of obtaining a Let's Encrypt certificate failed!"
-    echo -n "* Still assume SSL? (y/N): "
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      warning "获取 Let's Encrypt 证书失败！"
+      echo -n "* 是否仍然假定 SSL？(y/N): "
+    else
+      warning "The process of obtaining a Let's Encrypt certificate failed!"
+      echo -n "* Still assume SSL? (y/N): "
+    fi
     read -r CONFIGURE_SSL
 
     if [[ "$CONFIGURE_SSL" =~ [Yy] ]]; then
@@ -346,14 +423,22 @@ letsencrypt() {
       CONFIGURE_LETSENCRYPT=false
     fi
   else
-    success "The process of obtaining a Let's Encrypt certificate succeeded!"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      success "Let's Encrypt 证书获取成功！"
+    else
+      success "The process of obtaining a Let's Encrypt certificate succeeded!"
+    fi
   fi
 }
 
 # ------ Webserver configuration functions ----- #
 
 configure_nginx() {
-  output "Configuring nginx .."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在配置 nginx..."
+  else
+    output "Configuring nginx .."
+  fi
 
   if [ "$ASSUME_SSL" == true ] && [ "$CONFIGURE_LETSENCRYPT" == false ]; then
     DL_FILE="nginx_ssl.conf"
@@ -392,13 +477,21 @@ configure_nginx() {
     systemctl restart nginx
   fi
 
-  success "Nginx configured!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "Nginx 配置完成！"
+  else
+    success "Nginx configured!"
+  fi
 }
 
 # --------------- Main functions --------------- #
 
 perform_install() {
-  output "Starting installation.. this might take a while!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "开始安装，这可能需要一些时间..."
+  else
+    output "Starting installation.. this might take a while!"
+  fi
   dep_install
   install_composer
   ptdl_dl

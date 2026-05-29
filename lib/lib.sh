@@ -87,19 +87,19 @@ output() {
 
 success() {
   echo ""
-  output "${COLOR_GREEN}SUCCESS${COLOR_NC}: $1"
+  output "${COLOR_GREEN}成功${COLOR_NC}: $1"
   echo ""
 }
 
 error() {
   echo ""
-  echo -e "* ${COLOR_RED}ERROR${COLOR_NC}: $1" 1>&2
+  echo -e "* ${COLOR_RED}错误${COLOR_NC}: $1" 1>&2
   echo ""
 }
 
 warning() {
   echo ""
-  output "${COLOR_YELLOW}WARNING${COLOR_NC}: $1"
+  output "${COLOR_YELLOW}警告${COLOR_NC}: $1"
   echo ""
 }
 
@@ -128,18 +128,36 @@ welcome() {
   get_latest_versions
 
   print_brake 70
-  output "Pterodactyl panel installation script @ $SCRIPT_RELEASE"
-  output ""
-  output "Copyright (C) 2018 - 2026, Vilhelm Prytz, <vilhelm@prytznet.se>"
-  output "https://github.com/pterodactyl-installer/pterodactyl-installer"
-  output ""
-  output "This script is not associated with the official Pterodactyl Project."
-  output ""
-  output "Running $OS version $OS_VER."
-  if [ "$1" == "panel" ]; then
-    output "Latest pterodactyl/panel is $PTERODACTYL_PANEL_VERSION"
-  elif [ "$1" == "wings" ]; then
-    output "Latest pterodactyl/wings is $PTERODACTYL_WINGS_VERSION"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "翼龙面板安装脚本 @ $SCRIPT_RELEASE"
+    output ""
+    output "版权所有 (C) 2018 - 2026, Vilhelm Prytz, <vilhelm@prytznet.se>"
+    output "https://github.com/pterodactyl-installer/pterodactyl-installer"
+    output ""
+    output "本脚本与翼龙官方项目无关。"
+    output ""
+    output "当前运行系统：$OS $OS_VER"
+    if [ "$1" == "panel" ]; then
+      output "最新面板版本：$PTERODACTYL_PANEL_VERSION"
+      output "(翼龙面板汉化版 https://github.com/pterodactyl-china/panel)"
+    elif [ "$1" == "wings" ]; then
+      output "最新 Wings 版本：$PTERODACTYL_WINGS_VERSION"
+      output "(Wings 汉化版 https://github.com/pterodactyl-china/wings)"
+    fi
+  else
+    output "Pterodactyl panel installation script @ $SCRIPT_RELEASE"
+    output ""
+    output "Copyright (C) 2018 - 2026, Vilhelm Prytz, <vilhelm@prytznet.se>"
+    output "https://github.com/pterodactyl-installer/pterodactyl-installer"
+    output ""
+    output "This script is not associated with the official Pterodactyl Project."
+    output ""
+    output "Running $OS version $OS_VER."
+    if [ "$1" == "panel" ]; then
+      output "Latest pterodactyl/panel is $PTERODACTYL_PANEL_VERSION"
+    elif [ "$1" == "wings" ]; then
+      output "Latest pterodactyl/wings is $PTERODACTYL_WINGS_VERSION"
+    fi
   fi
   print_brake 70
 }
@@ -153,7 +171,9 @@ get_latest_release() {
 }
 
 get_latest_versions() {
-  output "Retrieving release information..."
+  if [ "$PTERODACTYL_CHINA" == false ]; then
+    output "正在获取版本信息..."
+  fi
   if [ "$PTERODACTYL_CHINA" == true ]; then
     PTERODACTYL_PANEL_VERSION=$(get_latest_release "pterodactyl-china/panel")
     PTERODACTYL_WINGS_VERSION=$(get_latest_release "pterodactyl-china/wings")
@@ -173,8 +193,7 @@ update_lib_source() {
 
 run_installer() {
   if [ "$PTERODACTYL_CHINA" == true ]; then
-    SCRIPT_DIR_INSTALLER="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    bash "$SCRIPT_DIR_INSTALLER/installers/$1.sh"
+    bash "$PTERODACTYL_INSTALLER_DIR/installers/$1.sh"
   else
     bash <(curl -sSL "$GITHUB_URL/installers/$1.sh")
   fi
@@ -182,8 +201,7 @@ run_installer() {
 
 run_ui() {
   if [ "$PTERODACTYL_CHINA" == true ]; then
-    SCRIPT_DIR_UI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-    bash "$SCRIPT_DIR_UI/ui/$1.sh"
+    bash "$PTERODACTYL_INSTALLER_DIR/ui/$1.sh"
   else
     bash <(curl -sSL "$GITHUB_URL/ui/$1.sh")
   fi
@@ -221,12 +239,20 @@ create_db_user() {
   local db_user_password="$2"
   local db_host="${3:-127.0.0.1}"
 
-  output "Creating database user $db_user_name..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在创建数据库用户 $db_user_name..."
+  else
+    output "Creating database user $db_user_name..."
+  fi
 
   mariadb -u root -e "CREATE USER '$db_user_name'@'$db_host' IDENTIFIED BY '$db_user_password';"
   mariadb -u root -e "FLUSH PRIVILEGES;"
 
-  output "Database user $db_user_name created"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "数据库用户 $db_user_name 创建成功"
+  else
+    output "Database user $db_user_name created"
+  fi
 }
 
 grant_all_privileges() {
@@ -234,13 +260,20 @@ grant_all_privileges() {
   local db_user_name="$2"
   local db_host="${3:-127.0.0.1}"
 
-  output "Granting all privileges on $db_name to $db_user_name..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在授予 $db_name 的所有权限给 $db_user_name..."
+  else
+    output "Granting all privileges on $db_name to $db_user_name..."
+  fi
 
   mariadb -u root -e "GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user_name'@'$db_host' WITH GRANT OPTION;"
   mariadb -u root -e "FLUSH PRIVILEGES;"
 
-  output "Privileges granted"
-
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "权限授予完成"
+  else
+    output "Privileges granted"
+  fi
 }
 
 create_db() {
@@ -248,12 +281,20 @@ create_db() {
   local db_user_name="$2"
   local db_host="${3:-127.0.0.1}"
 
-  output "Creating database $db_name..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在创建数据库 $db_name..."
+  else
+    output "Creating database $db_name..."
+  fi
 
   mariadb -u root -e "CREATE DATABASE $db_name;"
   grant_all_privileges "$db_name" "$db_user_name" "$db_host"
 
-  output "Database $db_name created"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "数据库 $db_name 创建成功"
+  else
+    output "Database $db_name created"
+  fi
 }
 
 # --------------- Package Manager -------------- #
@@ -265,18 +306,33 @@ update_repos() {
 
   case "$OS" in
     ubuntu | debian)
-      output "Updating package repositories..."
+      if [ "$PTERODACTYL_CHINA" == true ]; then
+        output "正在更新软件包仓库..."
+      else
+        output "Updating package repositories..."
+      fi
       if ! apt-get update -y $args; then
-        error "Failed to update repositories."
+        if [ "$PTERODACTYL_CHINA" == true ]; then
+          error "更新软件包仓库失败。"
+        else
+          error "Failed to update repositories."
+        fi
         return 1
       fi
       ;;
     centos | almalinux | rockylinux)
-      # Skip since these distros auto-refresh metadata
-      output "Skipping repository update (handled automatically on $OS)."
+      if [ "$PTERODACTYL_CHINA" == true ]; then
+        output "跳过仓库更新($OS 自动处理)"
+      else
+        output "Skipping repository update (handled automatically on $OS)."
+      fi
       ;;
     *)
-      warning "Unsupported OS: $OS — skipping repository update."
+      if [ "$PTERODACTYL_CHINA" == true ]; then
+        warning "不支持的操作系统: $OS — 跳过仓库更新。"
+      else
+        warning "Unsupported OS: $OS — skipping repository update."
+      fi
       ;;
   esac
 }
@@ -320,7 +376,7 @@ required_input() {
     fi
   done
 
-  eval "$__resultvar="'$result'""
+  eval "$__resultvar="'$result'"
 }
 
 email_input() {
@@ -334,7 +390,7 @@ email_input() {
     valid_email "$result" || error "${3}"
   done
 
-  eval "$__resultvar="'$result'""
+  eval "$__resultvar="'$result'"
 }
 
 password_input() {
@@ -370,7 +426,7 @@ password_input() {
     [ -z "$result" ] && error "${3}"
   done
 
-  eval "$__resultvar="'$result'""
+  eval "$__resultvar="'$result'"
 }
 
 # ------------------ Firewall ------------------ #
@@ -380,19 +436,27 @@ ask_firewall() {
 
   case "$OS" in
   ubuntu | debian)
-    echo -e -n "* Do you want to automatically configure UFW (firewall)? (y/N): "
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      echo -e -n "* 是否要自动配置 UFW 防火墙? (y/N): "
+    else
+      echo -e -n "* Do you want to automatically configure UFW (firewall)? (y/N): "
+    fi
     read -r CONFIRM_UFW
 
     if [[ "$CONFIRM_UFW" =~ [Yy] ]]; then
-      eval "$__resultvar="'true'""
+      eval "$__resultvar="'true'"
     fi
     ;;
   rocky | almalinux)
-    echo -e -n "* Do you want to automatically configure firewall-cmd (firewall)? (y/N): "
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      echo -e -n "* 是否要自动配置 firewall-cmd 防火墙? (y/N): "
+    else
+      echo -e -n "* Do you want to automatically configure firewall-cmd (firewall)? (y/N): "
+    fi
     read -r CONFIRM_FIREWALL_CMD
 
     if [[ "$CONFIRM_FIREWALL_CMD" =~ [Yy] ]]; then
-      eval "$__resultvar="'true'""
+      eval "$__resultvar="'true'"
     fi
     ;;
   esac
@@ -402,7 +466,12 @@ install_firewall() {
   case "$OS" in
   ubuntu | debian)
     output ""
-    output "Installing Uncomplicated Firewall (UFW)"
+
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      output "正在安装 Uncomplicated Firewall (UFW)..."
+    else
+      output "Installing Uncomplicated Firewall (UFW)"
+    fi
 
     if ! [ -x "$(command -v ufw)" ]; then
       update_repos true
@@ -411,13 +480,22 @@ install_firewall() {
 
     ufw --force enable
 
-    success "Enabled Uncomplicated Firewall (UFW)"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      success "Uncomplicated Firewall (UFW) 已启用"
+    else
+      success "Enabled Uncomplicated Firewall (UFW)"
+    fi
 
     ;;
   rocky | almalinux)
 
     output ""
-    output "Installing FirewallD"+
+
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      output "正在安装 FirewallD..."
+    else
+      output "Installing FirewallD"
+    fi
 
     if ! [ -x "$(command -v firewall-cmd)" ]; then
       install_packages "firewalld" true
@@ -425,7 +503,11 @@ install_firewall() {
 
     systemctl --now enable firewalld >/dev/null
 
-    success "Enabled FirewallD"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      success "FirewallD 已启用"
+    else
+      success "Enabled FirewallD"
+    fi
 
     ;;
   esac
@@ -453,14 +535,23 @@ firewall_allow_ports() {
 # panel x86_64 check
 check_os_x86_64() {
   if [ "${ARCH}" != "amd64" ]; then
-    warning "Detected CPU architecture $CPU_ARCHITECTURE"
-    warning "Using any other architecture than 64 bit (x86_64) will cause problems."
-
-    echo -e -n "* Are you sure you want to proceed? (y/N):"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      warning "检测到 CPU 架构为 $CPU_ARCHITECTURE"
+      warning "使用非 64 位(x86_64)架构可能会导致问题。"
+      echo -e -n "* 是否确定要继续？(y/N):"
+    else
+      warning "Detected CPU architecture $CPU_ARCHITECTURE"
+      warning "Using any other architecture than 64 bit (x86_64) will cause problems."
+      echo -e -n "* Are you sure you want to proceed? (y/N):"
+    fi
     read -r choice
 
     if [[ ! "$choice" =~ [Yy] ]]; then
-      error "Installation aborted!"
+      if [ "$PTERODACTYL_CHINA" == true ]; then
+        error "安装已中止！"
+      else
+        error "Installation aborted!"
+      fi
       exit 1
     fi
   fi
@@ -468,7 +559,11 @@ check_os_x86_64() {
 
 # wings virtualization check
 check_virt() {
-  output "Installing virt-what..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装 virt-what..."
+  else
+    output "Installing virt-what..."
+  fi
 
   update_repos true
   install_packages "virt-what" true
@@ -480,25 +575,42 @@ check_virt() {
 
   case "$virt_serv" in
   *openvz* | *lxc*)
-    warning "Unsupported type of virtualization detected. Please consult with your hosting provider whether your server can run Docker or not. Proceed at your own risk."
-    echo -e -n "* Are you sure you want to proceed? (y/N): "
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      warning "检测到不支持的虚拟化类型。请咨询您的托管商是否支持 Docker。请自行承担风险。"
+      echo -e -n "* 是否确定要继续？(y/N): "
+    else
+      warning "Unsupported type of virtualization detected. Please consult with your hosting provider whether your server can run Docker or not. Proceed at your own risk."
+      echo -e -n "* Are you sure you want to proceed? (y/N): "
+    fi
     read -r CONFIRM_PROCEED
     if [[ ! "$CONFIRM_PROCEED" =~ [Yy] ]]; then
-      error "Installation aborted!"
+      if [ "$PTERODACTYL_CHINA" == true ]; then
+        error "安装已中止！"
+      else
+        error "Installation aborted!"
+      fi
       exit 1
     fi
     ;;
   *)
-    [ "$virt_serv" != "" ] && warning "Virtualization: $virt_serv detected."
+    [ "$virt_serv" != "" ] && warning "检测到虚拟化环境: $virt_serv"
     ;;
   esac
 
   if uname -r | grep -q "xxxx"; then
-    error "Unsupported kernel detected."
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      error "检测到不支持的内核。"
+    else
+      error "Unsupported kernel detected."
+    fi
     exit 1
   fi
 
-  success "System is compatible with docker"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "系统与 Docker 兼容"
+  else
+    success "System is compatible with docker"
+  fi
 }
 
 # Exit with error status code if user is not root
@@ -552,7 +664,11 @@ arm64 | aarch64)
   ARCH=arm64
   ;;
 *)
-  error "Only x86_64 and arm64 are supported!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    error "仅支持 x86_64 和 arm64 架构！"
+  else
+    error "Only x86_64 and arm64 are supported!"
+  fi
   exit 1
   ;;
 esac

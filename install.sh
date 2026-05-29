@@ -36,8 +36,8 @@ LOG_PATH="/var/log/pterodactyl-installer.log"
 
 # check for curl
 if ! [ -x "$(command -v curl)" ]; then
-  echo "* curl is required in order for this script to work."
-  echo "* install using apt (Debian and derivatives) or yum/dnf (CentOS)"
+  echo "* curl 是此脚本运行所必需的。"
+  echo "* 请使用 apt(Debian 及其衍生版)或 yum/dnf(CentOS)安装 curl"
   exit 1
 fi
 
@@ -59,6 +59,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "$PTERODACTYL_CHINA" == true ]; then
   # In --china mode, use local files directly (for pterodactyl-china support)
+  export PTERODACTYL_INSTALLER_DIR="$SCRIPT_DIR"
   cp "$SCRIPT_DIR/lib/lib.sh" /tmp/lib.sh
 else
   # Normal mode: download from remote GitHub repository
@@ -81,12 +82,12 @@ execute() {
   fi
 
   if [[ -n $2 ]]; then
-    echo -e -n "* Installation of $1 completed. Do you want to proceed to $2 installation? (y/N): "
+    echo -e -n "* $1 安装完成。是否继续安装 $2？(y/N): "
     read -r CONFIRM
     if [[ "$CONFIRM" =~ [Yy] ]]; then
       execute "$2"
     else
-      error "Installation of $2 aborted."
+      error "$2 安装已取消。"
       exit 1
     fi
   fi
@@ -96,43 +97,51 @@ welcome ""
 
 done=false
 while [ "$done" == false ]; do
-  options=(
-    "Install the panel"
-    "Install Wings"
-    "Install both [0] and [1] on the same machine (wings script runs after panel)"
-    # "Uninstall panel or wings\n"
-
-    "Install panel with canary version of the script (the versions that lives in master, may be broken!)"
-    "Install Wings with canary version of the script (the versions that lives in master, may be broken!)"
-    "Install both [3] and [4] on the same machine (wings script runs after panel)"
-    "Uninstall panel or wings with canary version of the script (the versions that lives in master, may be broken!)"
-  )
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    options=(
+      "安装面板"
+      "安装 Wings"
+      "同时安装面板和 Wings(先装面板后装 Wings)"
+      "使用开发版脚本安装面板(master 分支，可能不稳定！)"
+      "使用开发版脚本安装 Wings(master 分支，可能不稳定！)"
+      "同时安装面板和 Wings(开发版)"
+      "使用开发版脚本卸载面板或 Wings"
+    )
+  else
+    options=(
+      "Install the panel"
+      "Install Wings"
+      "Install both [0] and [1] on the same machine (wings script runs after panel)"
+      "Install panel with canary version of the script (the versions that lives in master, may be broken!)"
+      "Install Wings with canary version of the script (the versions that lives in master, may be broken!)"
+      "Install both [3] and [4] on the same machine (wings script runs after panel)"
+      "Uninstall panel or wings with canary version of the script (the versions that lives in master, may be broken!)"
+    )
+  fi
 
   actions=(
     "panel"
     "wings"
     "panel;wings"
-    # "uninstall"
-
     "panel_canary"
     "wings_canary"
     "panel_canary;wings_canary"
     "uninstall_canary"
   )
 
-  output "What would you like to do?"
+  output "请选择要执行的操作："
 
   for i in "${!options[@]}"; do
     output "[$i] ${options[$i]}"
   done
 
-  echo -n "* Input 0-$((${#actions[@]} - 1)): "
+  echo -n "* 输入 0-$((${#actions[@]} - 1)): "
   read -r action
 
-  [ -z "$action" ] && error "Input is required" && continue
+  [ -z "$action" ] && error "请输入选项" && continue
 
   valid_input=("$(for ((i = 0; i <= ${#actions[@]} - 1; i += 1)); do echo "${i}"; done)")
-  [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "Invalid option"
+  [[ ! " ${valid_input[*]} " =~ ${action} ]] && error "无效选项"
   [[ " ${valid_input[*]} " =~ ${action} ]] && done=true && IFS=";" read -r i1 i2 <<<"${actions[$action]}" && execute "$i1" "$i2"
 done
 

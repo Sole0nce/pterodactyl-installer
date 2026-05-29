@@ -56,7 +56,11 @@ MYSQL_DBHOST_USER="${MYSQL_DBHOST_USER:-pterodactyluser}"
 MYSQL_DBHOST_PASSWORD="${MYSQL_DBHOST_PASSWORD:-}"
 
 if [[ $CONFIGURE_DBHOST == true && -z "${MYSQL_DBHOST_PASSWORD}" ]]; then
-  error "Mysql database host user password is required"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    error "数据库主机用户密码是必需的"
+  else
+    error "Mysql database host user password is required"
+  fi
   exit 1
 fi
 
@@ -70,7 +74,11 @@ enable_services() {
 }
 
 dep_install() {
-  output "Installing dependencies for $OS $OS_VER..."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在为 $OS $OS_VER 安装依赖..."
+  else
+    output "Installing dependencies for $OS $OS_VER..."
+  fi
 
   [ "$CONFIGURE_FIREWALL" == true ] && install_firewall && firewall_ports
 
@@ -108,50 +116,94 @@ dep_install() {
 
   enable_services
 
-  success "Dependencies installed!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "依赖安装完成！"
+  else
+    success "Dependencies installed!"
+  fi
 }
 
 ptdl_dl() {
-  echo "* Downloading Pterodactyl Wings.. "
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    echo "* 正在下载翼龙 Wings..."
+  else
+    echo "* Downloading Pterodactyl Wings.. "
+  fi
 
   mkdir -p /etc/pterodactyl
   curl -L -o /usr/local/bin/wings "$WINGS_DL_BASE_URL$ARCH"
 
   chmod u+x /usr/local/bin/wings
 
-  success "Pterodactyl Wings downloaded successfully"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "翼龙 Wings 下载完成"
+  else
+    success "Pterodactyl Wings downloaded successfully"
+  fi
 }
 
 systemd_file() {
-  output "Installing systemd service.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装 systemd 服务..."
+  else
+    output "Installing systemd service.."
+  fi
 
   curl -o /etc/systemd/system/wings.service "$GITHUB_URL"/configs/wings.service
   systemctl daemon-reload
   systemctl enable wings
 
-  success "Installed systemd service!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "systemd 服务安装完成！"
+  else
+    success "Installed systemd service!"
+  fi
 }
 
 firewall_ports() {
-  output "Opening port 22 (SSH), 8080 (Wings Port), 2022 (Wings SFTP Port)"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在开放端口: 22 (SSH)、8080 (Wings 端口)、2022 (Wings SFTP 端口)"
+  else
+    output "Opening port 22 (SSH), 8080 (Wings Port), 2022 (Wings SFTP Port)"
+  fi
 
   [ "$CONFIGURE_LETSENCRYPT" == true ] && firewall_allow_ports "80 443"
   [ "$CONFIGURE_DB_FIREWALL" == true ] && firewall_allow_ports "3306"
 
   firewall_allow_ports "22"
-  output "Allowed port 22"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "已开放端口 22"
+  else
+    output "Allowed port 22"
+  fi
   firewall_allow_ports "8080"
-  output "Allowed port 8080"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "已开放端口 8080"
+  else
+    output "Allowed port 8080"
+  fi
   firewall_allow_ports "2022"
-  output "Allowed port 2022"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "已开放端口 2022"
+  else
+    output "Allowed port 2022"
+  fi
 
-  success "Firewall ports opened!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "防火墙端口已开放！"
+  else
+    success "Firewall ports opened!"
+  fi
 }
 
 letsencrypt() {
   FAILED=false
 
-  output "Configuring LetsEncrypt.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在配置 Let's Encrypt..."
+  else
+    output "Configuring LetsEncrypt.."
+  fi
 
   # If user has nginx
   systemctl stop nginx || true
@@ -163,20 +215,36 @@ letsencrypt() {
 
   # Check if it succeded
   if [ ! -d "/etc/letsencrypt/live/$FQDN/" ] || [ "$FAILED" == true ]; then
-    warning "The process of obtaining a Let's Encrypt certificate failed!"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      warning "获取 Let's Encrypt 证书失败！"
+    else
+      warning "The process of obtaining a Let's Encrypt certificate failed!"
+    fi
   else
-    success "The process of obtaining a Let's Encrypt certificate succeeded!"
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      success "Let's Encrypt 证书获取成功！"
+    else
+      success "The process of obtaining a Let's Encrypt certificate succeeded!"
+    fi
   fi
 }
 
 configure_mysql() {
-  output "Configuring MySQL.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在配置 MySQL..."
+  else
+    output "Configuring MySQL.."
+  fi
 
   create_db_user "$MYSQL_DBHOST_USER" "$MYSQL_DBHOST_PASSWORD" "$MYSQL_DBHOST_HOST"
   grant_all_privileges "*" "$MYSQL_DBHOST_USER" "$MYSQL_DBHOST_HOST"
 
   if [ "$MYSQL_DBHOST_HOST" != "127.0.0.1" ]; then
-    echo "* Changing MySQL bind address.."
+    if [ "$PTERODACTYL_CHINA" == true ]; then
+      echo "* 正在更改 MySQL 绑定地址.."
+    else
+      echo "* Changing MySQL bind address.."
+    fi
 
     case "$OS" in
     debian | ubuntu)
@@ -190,13 +258,21 @@ configure_mysql() {
     systemctl restart mysqld
   fi
 
-  success "MySQL configured!"
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    success "MySQL 配置完成！"
+  else
+    success "MySQL configured!"
+  fi
 }
 
 # --------------- Main functions --------------- #
 
 perform_install() {
-  output "Installing pterodactyl wings.."
+  if [ "$PTERODACTYL_CHINA" == true ]; then
+    output "正在安装翼龙 Wings..."
+  else
+    output "Installing pterodactyl wings.."
+  fi
   dep_install
   ptdl_dl
   systemd_file
