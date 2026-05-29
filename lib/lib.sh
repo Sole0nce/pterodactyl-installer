@@ -376,7 +376,7 @@ required_input() {
     fi
   done
 
-  eval "$__resultvar="'$result'"
+  printf -v "$__resultvar" '%s' "$result"
 }
 
 email_input() {
@@ -390,7 +390,7 @@ email_input() {
     valid_email "$result" || error "${3}"
   done
 
-  eval "$__resultvar="'$result'"
+  printf -v "$__resultvar" '%s' "$result"
 }
 
 password_input() {
@@ -426,7 +426,7 @@ password_input() {
     [ -z "$result" ] && error "${3}"
   done
 
-  eval "$__resultvar="'$result'"
+  printf -v "$__resultvar" '%s' "$result"
 }
 
 # ------------------ Firewall ------------------ #
@@ -444,7 +444,7 @@ ask_firewall() {
     read -r CONFIRM_UFW
 
     if [[ "$CONFIRM_UFW" =~ [Yy] ]]; then
-      eval "$__resultvar="'true'"
+      printf -v "$__resultvar" '%s' "true"
     fi
     ;;
   rocky | almalinux)
@@ -456,7 +456,7 @@ ask_firewall() {
     read -r CONFIRM_FIREWALL_CMD
 
     if [[ "$CONFIRM_FIREWALL_CMD" =~ [Yy] ]]; then
-      eval "$__resultvar="'true'"
+      printf -v "$__resultvar" '%s' "true"
     fi
     ;;
   esac
