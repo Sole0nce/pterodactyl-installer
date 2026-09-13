@@ -49,6 +49,7 @@ export MYSQL_PASSWORD=""
 # Environment
 export timezone=""
 export email=""
+export telemetry=""
 
 # Initial admin account
 export user_email=""
@@ -104,6 +105,19 @@ ask_assume_ssl() {
 
   [[ "$ASSUME_SSL_INPUT" =~ [Yy] ]] && ASSUME_SSL=true
   true
+}
+
+ask_telemetry() {
+  output "Pterodactyl Panel collects anonymous telemetry data to help steer the development."
+  output "More Info: https://pterodactyl.io/panel/1.0/additional_configuration.html#telemetry"
+  echo -n "* Enable sending anonymous telemetry data? (yes/no) [yes]: "
+  read -r telemetry_input
+
+  if [[ -z "$telemetry_input" ]] || [[ "$telemetry_input" =~ ^([Yy]|[Yy]es)$ ]]; then
+    telemetry="true"
+  else
+    telemetry="false"
+  fi
 }
 
 check_FQDN_SSL() {
@@ -262,6 +276,9 @@ main() {
   # verify FQDN if user has selected to assume SSL or configure Let's Encrypt
   [ "$CONFIGURE_LETSENCRYPT" == true ] || [ "$ASSUME_SSL" == true ] && bash <(curl -s "$GITHUB_URL"/lib/verify-fqdn.sh) "$FQDN"
 
+  # ask telemetry preference
+  ask_telemetry
+
   # summary
   summary
 
@@ -302,6 +319,7 @@ summary() {
     output "配置防火墙? $CONFIGURE_FIREWALL"
     output "配置 Let's Encrypt? $CONFIGURE_LETSENCRYPT"
     output "假定 SSL? $ASSUME_SSL"
+    output "遥测数据上报? $telemetry"
   else
     output "Pterodactyl panel $PTERODACTYL_PANEL_VERSION with nginx on $OS"
     output "Database name: $MYSQL_DB"
@@ -318,6 +336,7 @@ summary() {
     output "Configure Firewall? $CONFIGURE_FIREWALL"
     output "Configure Let's Encrypt? $CONFIGURE_LETSENCRYPT"
     output "Assume SSL? $ASSUME_SSL"
+    output "Telemetry: $telemetry"
   fi
   print_brake 62
 }

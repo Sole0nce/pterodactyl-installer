@@ -48,6 +48,7 @@ MYSQL_PASSWORD="${MYSQL_PASSWORD:-$(gen_passwd 64)}"
 
 # Environment
 timezone="${timezone:-Europe/Stockholm}"
+telemetry="${telemetry:-true}"
 
 # Assume SSL, will fetch different config if true
 ASSUME_SSL="${ASSUME_SSL:-false}"
@@ -163,6 +164,7 @@ configure() {
     --redis-host="localhost" \
     --redis-pass="null" \
     --redis-port="6379" \
+    --telemetry="$telemetry" \
     --settings-ui=true
 
   # Fill in environment:database credentials automatically
@@ -289,9 +291,6 @@ ubuntu_dep() {
 
   # Add Ubuntu universe repo
   add-apt-repository universe -y
-
-  # Add PPA for PHP (we need 8.3)
-  LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
 }
 
 debian_dep() {
@@ -328,7 +327,7 @@ dep_install() {
   case "$OS" in
   ubuntu | debian)
     [ "$OS" == "ubuntu" ] && ubuntu_dep
-    [ "$OS" == "debian" ] && debian_dep
+    debian_dep
 
     update_repos
 

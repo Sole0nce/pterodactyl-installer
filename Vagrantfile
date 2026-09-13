@@ -10,6 +10,13 @@ Vagrant.configure("2") do |config|
     inline: "ln -sf /vagrant/lib/lib.sh /tmp/lib.sh"
 
   # Define Ubuntu VMs
+  config.vm.define "ubuntu_resolute" do |ubuntu_noble|
+    ubuntu_noble.vm.box = "alvistack/ubuntu-26.04"
+    ubuntu_noble.vm.provider "virtualbox" do |vb|
+      vb.memory = "4096"
+    end
+  end
+
   config.vm.define "ubuntu_noble" do |ubuntu_noble|
     ubuntu_noble.vm.box = "alvistack/ubuntu-24.04"
     ubuntu_noble.vm.provider "virtualbox" do |vb|
